@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 )
 
 func getHostname() (string, error) {
@@ -44,10 +45,22 @@ func main() {
 	// Set up logging to both stdout and the log file
 	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 
-	http.HandleFunc("/", handler)
+	// Create a custom server with keepalive initially enabled
+	server := &http.Server{
+		Addr:           ":8080",
+		Handler:        http.HandlerFunc(handler),
+		ReadTimeout:    5 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		IdleTimeout:    0,       // Disable keepalive
+		MaxHeaderBytes: 1 << 20, // 1 MB
+	}
+
+	// Disable keepalives explicitly
+	server.SetKeepAlivesEnabled(false)
+
 	fmt.Println("Server is running on :8080...")
-	err = http.ListenAndServe(":8080", nil)
-	if err != nil {
+	err = server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
 		log.Println("Error starting server:", err)
 		os.Exit(1)
 	}
