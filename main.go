@@ -29,8 +29,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	message := fmt.Sprintf("Hello from Pod %s", hostname)
 	fmt.Fprintln(w, message)
 
-	// Log the client's visit
-	log.Printf("Client %s visited the server\n", r.RemoteAddr)
+	// Log client's browser (User-Agent) and host
+	userAgent := r.UserAgent()
+	host := r.Host
+
+	log.Printf("Client %s visited the server. Browser: %s, Host: %s\n",
+		r.RemoteAddr,
+		userAgent,
+		host,
+	)
 }
 
 func main() {
@@ -45,7 +52,7 @@ func main() {
 	// Set up logging to both stdout and the log file
 	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 
-	// Create a custom server with keepalive initially enabled
+	// Create a custom server with timeouts and keep-alive disabled
 	server := &http.Server{
 		Addr:           ":8080",
 		Handler:        http.HandlerFunc(handler),
