@@ -29,14 +29,19 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	message := fmt.Sprintf("Hello from Pod %s", hostname)
 	fmt.Fprintln(w, message)
 
-	// Log client's browser (User-Agent) and host
+	// Log client's browser (User-Agent), host, and X-Forwarded-For header
 	userAgent := r.UserAgent()
 	host := r.Host
+	forwardedFor := r.Header.Get("X-Forwarded-For")
+	if forwardedFor == "" {
+		forwardedFor = "not set"
+	}
 
-	log.Printf("Client %s visited the server. Browser: %s, Host: %s\n",
+	log.Printf("Client %s visited the server. Browser: %s, Host: %s, X-Forwarded-For: %s\n",
 		r.RemoteAddr,
 		userAgent,
 		host,
+		forwardedFor,
 	)
 }
 
